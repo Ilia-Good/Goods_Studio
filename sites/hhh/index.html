@@ -121,18 +121,32 @@ a.button-link {
         var error = card ? card.querySelector('.sb-contact-error') : null;
         if (success) success.hidden = true;
         if (error) { error.hidden = true; error.textContent = 'Wrong. Come back later.'; }
+        var endpoints = ['https://sitebuilding.onrender.com/api/contact/send', 'https://sitebuilding.onrender.com/api/contact/send'];
+        endpoints = endpoints.filter(function(v, i, arr) { return arr.indexOf(v) === i; });
+        var payload = {
+          siteId: form.dataset.siteId,
+          name: form.querySelector('[name="name"]').value,
+          email: form.querySelector('[name="email"]').value,
+          message: form.querySelector('[name="message"]').value,
+          websiteField: form.querySelector('[name="middle_name"]').value
+        };
         try {
-          var resp = await fetch('https://sitebuilding.onrender.com/api/contact/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({
-              siteId: form.dataset.siteId,
-              name: form.querySelector('[name="name"]').value,
-              email: form.querySelector('[name="email"]').value,
-              message: form.querySelector('[name="message"]').value,
-              websiteField: form.querySelector('[name="middle_name"]').value
-            })
-          });
+          var resp = null;
+          var lastNetworkError = null;
+          for (var i = 0; i < endpoints.length; i++) {
+            try {
+              resp = await fetch(endpoints[i], {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              break;
+            } catch (networkErr) {
+              lastNetworkError = networkErr;
+            }
+          }
+          if (!resp) throw (lastNetworkError || new Error('network_error'));
           if (!resp.ok) {
             var problem = null;
             try { problem = await resp.json(); } catch (_) { }
