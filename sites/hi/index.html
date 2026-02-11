@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hi</title>
-  
   <style>
 html, body { height: 100%; }
 body {
@@ -42,18 +41,106 @@ a.button-link {
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(99, 102, 241, 0.6);
 }
+.contact-form-shell {
+  max-width: 640px;
+  margin: 1rem auto;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(165deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.92));
+}
+.sb-contact-form {
+  display: grid;
+  gap: .7rem;
+}
+.sb-contact-form input,
+.sb-contact-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(148, 163, 184, .4);
+  border-radius: 12px;
+  padding: .65rem .8rem;
+  background: rgba(15, 23, 42, .8);
+  color: #e5e7eb;
+}
+.sb-contact-form button {
+  border: none;
+  border-radius: 12px;
+  padding: .7rem 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #2563eb, #22c55e);
+  color: #fff;
+  cursor: pointer;
+}
+.sb-hp {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.sb-contact-success,
+.sb-contact-error {
+  margin-top: .55rem;
+  font-size: .95rem;
+}
+.sb-contact-success { color: #34d399; }
+.sb-contact-error { color: #fca5a5; }
   </style>
 </head>
 <body>
-<div class="site-title effect-shadow" style="text-align:left;color:#f8fafc">Hi</div>
-<header class="site-header effect-shadow" style="text-align:left;color:#e5e7eb"><div>Запуск за 7 дней</div></header>
-<main>
-<div class="" style=" color:#e5e7eb;"><h2>Почему мы</h2></div>
-<div class="" style=" color:#e5e7eb;"><p>Короткое описание продукта и ключевых выгод.</p></div>
-<div class="" style=" color:#e5e7eb;"><section><h3>Особенности</h3></section></div>
-<div><a href="https://example.com" target="_blank" rel="noopener noreferrer" class="button-link " style="padding:8px 16px;background:#2563eb;color:#fff">Попробовать</a></div>
-<div class=""><form action="https://formspree.io/YOUR_FORM_ID" method="POST"><input type="text" name="name" placeholder="Ваше имя" /><input type="email" name="_replyto" placeholder="Ваш email" /><input type="text" name="subject" placeholder="Тема" /><textarea name="message" placeholder="Сообщение"></textarea><div style="margin-top:.5rem"><button type="submit" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px">Отправить</button></div></form></div>
-</main>
-<footer class="effect-shadow" style="text-align:left;color:#e5e7eb"><div>Оставьте заявку на демо</div></footer>
+  <div class="site-title effect-shadow" style="text-align:left;color:#f8fafc">Hi</div>
+  <header class="site-header effect-shadow" style="text-align:left;color:#e5e7eb">
+    <div>Запуск за 7 дней</div>
+  </header>
+  <main>
+    <div class="" style="text-align:left;color:#e5e7eb;"><h2>Почему мы</h2></div>
+    <div class="" style="text-align:left;color:#e5e7eb;"><p>Короткое описание продукта и ключевых выгод.</p></div>
+    <div class="" style="text-align:left;color:#e5e7eb;"><section><h3>Особенности</h3></section></div>
+    <div style="text-align:left;"><a href="https://example.com" target="_blank" rel="noopener noreferrer" class="button-link effect-shadow" style="padding:8px 16px;background:#2563eb;color:#fff">Попробовать</a></div>
+    <div class="contact-form-shell " style="text-align:center;">
+      <form class="sb-contact-form" data-site-id="49d0fd66-5775-4621-b06c-07105c16ef3e">
+        <input type="text" name="name" placeholder="Ваше имя" required>
+        <input type="email" name="email" placeholder="Ваш email" required>
+        <textarea name="message" placeholder="Сообщение" rows="5" required></textarea>
+        <input type="text" name="websiteField" autocomplete="off" tabindex="-1" class="sb-hp">
+        <button type="submit">Отправить</button>
+      </form>
+      <div class="sb-contact-success" hidden>So beautiful that it went</div>
+      <div class="sb-contact-error" hidden>Wrong. Come back later.</div>
+    </div>
+  </main>
+  <footer class="effect-shadow" style="text-align:left;color:#e5e7eb"><div>Оставьте заявку на демо</div></footer>
+  <script>
+    document.querySelectorAll('.sb-contact-form').forEach(function(form) {
+      form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        var card = form.closest('.contact-form-shell');
+        var success = card ? card.querySelector('.sb-contact-success') : null;
+        var error = card ? card.querySelector('.sb-contact-error') : null;
+        if (success) success.hidden = true;
+        if (error) error.hidden = true;
+        try {
+          var resp = await fetch('http://sitebuilding.onrender.com/api/contact/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              siteId: form.dataset.siteId,
+              name: form.querySelector('[name="name"]').value,
+              email: form.querySelector('[name="email"]').value,
+              message: form.querySelector('[name="message"]').value,
+              websiteField: form.querySelector('[name="websiteField"]').value
+            })
+          });
+          if (!resp.ok) throw new Error('send_failed');
+          form.reset();
+          if (success) success.hidden = false;
+        } catch (e) {
+          if (error) error.hidden = false;
+        }
+      });
+    });
+  </script>
 </body>
 </html>
