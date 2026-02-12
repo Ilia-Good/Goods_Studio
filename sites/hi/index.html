@@ -92,26 +92,26 @@ a.button-link {
 <body>
   <div class="site-title effect-shadow" style="text-align:left;color:#f8fafc">Hi</div>
   <header class="site-header effect-shadow" style="text-align:left;color:#e5e7eb">
-    <div>Запуск за 7 дней</div>
+    <div>Привет! Я дизайнер.</div>
   </header>
   <main>
-    <div class="" style="text-align:left;color:#e5e7eb;"><h2>Почему мы</h2></div>
-    <div class="" style="text-align:left;color:#e5e7eb;"><p>Короткое описание продукта и ключевых выгод.</p></div>
-    <div class="" style="text-align:left;color:#e5e7eb;"><section><h3>Особенности</h3></section></div>
-    <div style="text-align:left;"><a href="https://example.com" target="_blank" rel="noopener noreferrer" class="button-link effect-shadow" style="padding:8px 16px;background:#2563eb;color:#fff">Попробовать</a></div>
+    <div class="" style="text-align:center;color:#e5e7eb;"><h2>Проекты</h2></div>
+    <div class="" style="text-align:center;color:#e5e7eb;"><p>Описание сильных сторон и опыта.</p></div>
+    <div class="" style="text-align:left;"><img src="https://placehold.co/900x500?text=Project+Preview" alt=""></div>
+    <div style="text-align:center;"><a href="https://t.me/" target="_blank" rel="noopener noreferrer" class="button-link " style="padding:8px 16px;background:#22c55e;color:#fff">Написать мне</a></div>
     <div class="contact-form-shell " style="text-align:center;">
       <form class="sb-contact-form" data-site-id="49d0fd66-5775-4621-b06c-07105c16ef3e">
         <input type="text" name="name" placeholder="Ваше имя" required>
         <input type="email" name="email" placeholder="Ваш email" required>
         <textarea name="message" placeholder="Сообщение" rows="5" required></textarea>
-        <input type="text" name="websiteField" autocomplete="off" tabindex="-1" class="sb-hp">
+        <input type="text" name="middle_name" autocomplete="off" tabindex="-1" class="sb-hp">
         <button type="submit">Отправить</button>
       </form>
       <div class="sb-contact-success" hidden>So beautiful that it went</div>
       <div class="sb-contact-error" hidden>Wrong. Come back later.</div>
     </div>
   </main>
-  <footer class="effect-shadow" style="text-align:left;color:#e5e7eb"><div>Оставьте заявку на демо</div></footer>
+  <footer class="effect-shadow" style="text-align:left;color:#e5e7eb"><div>Связаться: hello@example.com</div></footer>
   <script>
     document.querySelectorAll('.sb-contact-form').forEach(function(form) {
       form.addEventListener('submit', async function(event) {
@@ -120,23 +120,53 @@ a.button-link {
         var success = card ? card.querySelector('.sb-contact-success') : null;
         var error = card ? card.querySelector('.sb-contact-error') : null;
         if (success) success.hidden = true;
-        if (error) error.hidden = true;
+        if (error) { error.hidden = true; error.textContent = 'Wrong. Come back later.'; }
+        var endpoints = ['https://sitebuilding.onrender.com/api/contact/send', 'https://sitebuilding.onrender.com/api/contact/send'];
+        endpoints = endpoints.filter(function(v, i, arr) { return arr.indexOf(v) === i; });
+        var payload = {
+          siteId: form.dataset.siteId,
+          name: form.querySelector('[name="name"]').value,
+          email: form.querySelector('[name="email"]').value,
+          message: form.querySelector('[name="message"]').value,
+          websiteField: form.querySelector('[name="middle_name"]').value
+        };
         try {
-          var resp = await fetch('http://sitebuilding.onrender.com/api/contact/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({
-              siteId: form.dataset.siteId,
-              name: form.querySelector('[name="name"]').value,
-              email: form.querySelector('[name="email"]').value,
-              message: form.querySelector('[name="message"]').value,
-              websiteField: form.querySelector('[name="websiteField"]').value
-            })
-          });
-          if (!resp.ok) throw new Error('send_failed');
+          var resp = null;
+          var lastNetworkError = null;
+          for (var i = 0; i < endpoints.length; i++) {
+            try {
+              resp = await fetch(endpoints[i], {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              break;
+            } catch (networkErr) {
+              lastNetworkError = networkErr;
+            }
+          }
+          if (!resp) throw (lastNetworkError || new Error('network_error'));
+          if (!resp.ok) {
+            var problem = null;
+            try { problem = await resp.json(); } catch (_) { }
+            var reason = problem && problem.reason ? problem.reason : '';
+            if (error) {
+              if (reason === 'invalid_email') error.textContent = 'Wrong email format.';
+              else if (reason === 'invalid_name') error.textContent = 'Wrong name.';
+              else if (reason === 'invalid_message') error.textContent = 'Wrong message length.';
+              else if (reason === 'rate_limit') error.textContent = 'Too many requests. Come back later.';
+              else if (reason === 'limit') error.textContent = 'Daily limit reached. Come back later.';
+              else if (reason === 'site_not_found') error.textContent = 'Site not found. Re-publish the site.';
+              else if (reason === 'spam') error.textContent = 'Message blocked by anti-spam.';
+              else error.textContent = 'Wrong. Come back later.';
+            }
+            throw new Error('send_failed');
+          }
           form.reset();
           if (success) success.hidden = false;
         } catch (e) {
+          if (error && (!error.textContent || error.textContent === 'Wrong. Come back later.')) error.textContent = 'Network/CORS error. Try again later.';
           if (error) error.hidden = false;
         }
       });
